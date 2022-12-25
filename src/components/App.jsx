@@ -71,7 +71,7 @@ class App extends Component {
       <AppStyled>
         <Searchbar onSubmit={this.handleFormSearch} />
 
-        {status === 'resolved' && <ImageGallery images={images} />}
+        <ImageGallery images={images} />
 
         {isBtnMoreShown && status === 'resolved' && (
           <Button onBtnMoreClick={this.onBtnMoreClick} />
