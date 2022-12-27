@@ -12,4 +12,15 @@ export const fetchImages = (requestInfo, page, perPage) => {
   });
 };
 
-export default fetchImages;
+// export default fetchImages;
+
+export const normalizedImages = images => {
+  return images.map(imageEl => {
+    return {
+      id: imageEl.id,
+      webformatURL: imageEl.webformatURL,
+      tags: imageEl.tags,
+      largeImageURL: imageEl.largeImageURL,
+    };
+  });
+};

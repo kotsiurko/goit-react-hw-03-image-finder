@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-import fetchImages from '../services/pixabay-api';
+import { fetchImages, normalizedImages } from '../services/pixabay-api';
 import ImageGallery from './ImageGallery/ImageGallery';
 
 import Searchbar from './Searchbar/Searchbar';
@@ -21,38 +21,6 @@ class App extends Component {
     perPage: 12,
   };
 
-  handleFormSearch = newRequest => {
-    this.setState({ requestInfo: newRequest, page: 1, images: [] });
-  };
-
-  renderImages = async () => {
-    const { requestInfo, page, perPage } = this.state;
-    try {
-      await fetchImages(requestInfo, page, perPage).then(response => {
-        if (response.hits.length === 0) {
-          toast.info(
-            'Sorry, but there are no results for your request. Please, try again with another request'
-          );
-          this.setState({ status: 'resolved', isBtnMoreShown: false });
-          return;
-        }
-        this.setState(prevState => ({
-          images: [...prevState.images, ...response.hits],
-          status: 'resolved',
-          isBtnMoreShown: page < Math.ceil(response.totalHits / perPage),
-        }));
-      });
-    } catch (error) {
-      this.setState({ error, status: 'rejected' });
-    }
-  };
-
-  onBtnMoreClick = () => {
-    this.setState(previousState => ({
-      page: previousState.page + 1,
-    }));
-  };
-
   componentDidUpdate(_, prevState) {
     const { requestInfo, page } = this.state;
     if (requestInfo !== prevState.requestInfo || page !== prevState.page) {
@@ -61,8 +29,39 @@ class App extends Component {
     }
   }
 
-  onImageClick = largeImageURL => {
-    this.setState({ largeImageURL });
+  handleFormSearch = newRequest => {
+    this.setState({ requestInfo: newRequest, page: 1, images: [] });
+  };
+
+  onBtnMoreClick = () => {
+    this.setState(previousState => ({
+      page: previousState.page + 1,
+    }));
+  };
+
+  renderImages = async () => {
+    const { requestInfo, page, perPage } = this.state;
+    try {
+      const response = await fetchImages(requestInfo, page, perPage);
+
+      if (response.hits.length === 0) {
+        toast.info(
+          'Sorry, but there are no results for your request. Please, try again with another request'
+        );
+        this.setState({ status: 'resolved', isBtnMoreShown: false });
+        return;
+      }
+
+      const normalizedData = normalizedImages(response.hits);
+
+      this.setState(prevState => ({
+        images: [...prevState.images, ...normalizedData],
+        status: 'resolved',
+        isBtnMoreShown: page < Math.ceil(response.totalHits / perPage),
+      }));
+    } catch (error) {
+      this.setState({ error, status: 'rejected' });
+    }
   };
 
   render() {
@@ -71,7 +70,7 @@ class App extends Component {
       <AppStyled>
         <Searchbar onSubmit={this.handleFormSearch} />
 
-        <ImageGallery images={images} />
+        {images.length > 0 && <ImageGallery images={images} />}
 
         {isBtnMoreShown && status === 'resolved' && (
           <Button onBtnMoreClick={this.onBtnMoreClick} />
